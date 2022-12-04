@@ -1,50 +1,23 @@
-import React from "react";
 import { useRef, useState, useEffect } from "react";
-import axios from "../api/axios";
 import useAuth from "../hooks/useAuth";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
+import axios from "../api/axios";
 const LOGIN_URL = "/auth";
 
-export const Login = () => {
+const Login = () => {
   const { setAuth } = useAuth();
-  const userRef = useRef();
-  const errRef = useRef();
 
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location?.state?.from?.pathname || "/";
+  const from = location.state?.from?.pathname || "/";
+
+  const userRef = useRef();
+  const errRef = useRef();
 
   const [user, setUser] = useState("");
   const [pwd, setPwd] = useState("");
   const [errMsg, setErrMsg] = useState("");
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.post(LOGIN_URL, JSON.stringify({ user, pwd }), {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      });
-      const roles = res.data.roles;
-      const accessToken = res.data.accessToken;
-      setAuth({ user, pwd, roles, accessToken });
-      navigate(from, { replace: true });
-      //clear input fields
-    } catch (e) {
-      if (!e.response) {
-        setErrMsg("No server response");
-      }
-      if (e.response.status === 400) {
-        setErrMsg("Missing username or password");
-      }
-      if (e.response.status === 401) {
-        setErrMsg("Unauthorized");
-      }
-      setErrMsg("Registration failed");
-      errRef.current.focus();
-    }
-  };
 
   useEffect(() => {
     userRef.current.focus();
@@ -53,6 +26,40 @@ export const Login = () => {
   useEffect(() => {
     setErrMsg("");
   }, [user, pwd]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post(
+        LOGIN_URL,
+        JSON.stringify({ user, pwd }),
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+      console.log(JSON.stringify(response?.data));
+      //console.log(JSON.stringify(response));
+      const accessToken = response?.data?.accessToken;
+      const roles = response?.data?.roles;
+      setAuth({ user, pwd, roles, accessToken });
+      setUser("");
+      setPwd("");
+      navigate(from, { replace: true });
+    } catch (err) {
+      if (!err?.response) {
+        setErrMsg("No Server Response");
+      } else if (err.response?.status === 400) {
+        setErrMsg("Missing Username or Password");
+      } else if (err.response?.status === 401) {
+        setErrMsg("Unauthorized");
+      } else {
+        setErrMsg("Login Failed");
+      }
+      errRef.current.focus();
+    }
+  };
 
   return (
     <section>
@@ -63,7 +70,7 @@ export const Login = () => {
       >
         {errMsg}
       </p>
-      <h1>Sign in</h1>
+      <h1>Sign In</h1>
       <form onSubmit={handleSubmit}>
         <label htmlFor="username">Username:</label>
         <input
@@ -85,15 +92,16 @@ export const Login = () => {
           required
         />
         <button>Sign In</button>
-        <p>
-          Need an Account?
-          <br />
-          <span className="line">
-            {/*put router link here*/}
-            <Link to="/register">Sign Up</Link>
-          </span>
-        </p>
       </form>
+      <p>
+        Need an Account?
+        <br />
+        <span className="line">
+          <Link to="/register">Sign Up</Link>
+        </span>
+      </p>
     </section>
   );
 };
+
+export default Login;

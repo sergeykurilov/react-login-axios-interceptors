@@ -1,12 +1,11 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 
-function Layout() {
+const Layout = () => {
   return (
     <main className="App">
       <Outlet />
     </main>
   );
-}
+};
 
 export default Layout;
